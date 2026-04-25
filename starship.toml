@@ -1,0 +1,5 @@
+# Show conda on the prompt (default hides "base" — set ignore_base to see it)
+[conda]
+# Set to false if you also want the name when the active env is `base`
+ignore_base = false
+format = "via [$symbol$environment]($style) "

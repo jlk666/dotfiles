@@ -1,0 +1,14 @@
+# Linux/BSD — keep this file free of macOS-only paths (Homebrew, mac JDK, etc.).
+export PATH="$HOME/.local/bin:$PATH"
+
+# Optional: uncomment and adjust if you use a JDK from the distro.
+# export JAVA_HOME=/usr/lib/jvm/default-java
+# export PATH="$JAVA_HOME/bin:$PATH"
+
+# Oh My Zsh — Agnoster (powerline-style) theme
+# Use a Nerd Font or Powerline font in the terminal (e.g. MesloLGS Nerd Font) so symbols render correctly
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="agnoster"
+export DEFAULT_USER="${USER}"
+plugins=(git)
+source $ZSH/oh-my-zsh.sh

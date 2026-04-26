@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Apply dotfiles from this repo to your home directory.
 # macOS: full setup (Oh My Zsh, Ghostty, Starship, lazygit, yazi, tlrc).
-# Linux/BSD: Starship, lazygit, yazi, tlrc (Oh My Zsh optional; no Ghostty symlink).
+# Linux/BSD: zsh first, then Oh My Zsh, Starship, lazygit, yazi, tlrc (no Ghostty symlink).
+# Optional: linux/install.env (see comments in that file).
 # Run from the repo root: ./install.sh
 
 set -euo pipefail
@@ -9,6 +10,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OS="$(uname -s)"
 BACKUP="${DOTFILES_BACKUP_DIR:-$HOME/.dotfiles-backup-$(date +%Y%m%d%H%M%S)}"
+
+if [ "$OS" != "Darwin" ] && [ -f "$ROOT/linux/install.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$ROOT/linux/install.env"
+  set +a
+fi
 
 backup_if_exists() {
   local f="$1"
@@ -19,25 +27,73 @@ backup_if_exists() {
   fi
 }
 
-echo "==> Oh My Zsh (skip if already installed)"
-if [ "$OS" = "Darwin" ]; then
-  if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    export RUNZSH=no
-    export CHSH=no
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || {
-      echo "Install Oh My Zsh failed; install manually from https://ohmyz.sh" >&2
-      exit 1
-    }
+run_pkg() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
   else
-    echo "    ~/.oh-my-zsh already present"
+    sudo "$@"
   fi
+}
+
+install_zsh_linux() {
+  if command -v zsh >/dev/null 2>&1; then
+    echo "    zsh already on PATH ($(command -v zsh))"
+    return 0
+  fi
+  if [ "${DOTFILES_NO_SUDO:-0}" = "1" ]; then
+    echo "zsh is not installed and DOTFILES_NO_SUDO=1. Install zsh, then re-run." >&2
+    exit 1
+  fi
+  echo "    installing zsh via system package manager..."
+  if command -v apt-get >/dev/null 2>&1; then
+    run_pkg apt-get update -qq
+    run_pkg apt-get install -y zsh
+  elif command -v dnf >/dev/null 2>&1; then
+    run_pkg dnf install -y zsh
+  elif command -v yum >/dev/null 2>&1; then
+    run_pkg yum install -y zsh
+  elif command -v pacman >/dev/null 2>&1; then
+    run_pkg pacman -S --noconfirm zsh
+  elif command -v zypper >/dev/null 2>&1; then
+    run_pkg zypper install -y zsh
+  elif command -v apk >/dev/null 2>&1; then
+    run_pkg apk add zsh
+  elif command -v pkg >/dev/null 2>&1; then
+    run_pkg pkg install -y zsh
+  elif command -v brew >/dev/null 2>&1; then
+    brew install zsh
+  else
+    echo "Could not install zsh automatically. Install zsh with your package manager, then re-run." >&2
+    exit 1
+  fi
+}
+
+if [ "$OS" != "Darwin" ]; then
+  echo "==> zsh (Linux/BSD)"
+  install_zsh_linux
+fi
+
+echo "==> Oh My Zsh (skip if already installed)"
+if [ "${DOTFILES_SKIP_OH_MY_ZSH:-0}" = "1" ]; then
+  echo "    skipped (DOTFILES_SKIP_OH_MY_ZSH=1)"
+elif [ ! -d "$HOME/.oh-my-zsh" ]; then
+  export RUNZSH=no
+  export CHSH=no
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || {
+    echo "Install Oh My Zsh failed; install manually from https://ohmyz.sh" >&2
+    exit 1
+  }
 else
-  echo "    skipped on non-macOS (install from https://ohmyz.sh if you use zsh)"
+  echo "    ~/.oh-my-zsh already present"
 fi
 
 echo "==> Link .zshrc"
 backup_if_exists "$HOME/.zshrc"
-ln -sf "$ROOT/zsh/.zshrc" "$HOME/.zshrc"
+if [ "$OS" = "Darwin" ]; then
+  ln -sf "$ROOT/zsh/.zshrc" "$HOME/.zshrc"
+else
+  ln -sf "$ROOT/zsh/.zshrc.linux" "$HOME/.zshrc"
+fi
 
 echo "==> Ghostty"
 if [ "$OS" = "Darwin" ]; then
@@ -89,7 +145,10 @@ if [ "$OS" = "Darwin" ]; then
   echo "       eval \"\$(starship init zsh)\""
   echo "     (and place it after Oh My Zsh if you use both, or use only starship and disable omz theme.)"
 else
-  echo "On Linux/BSD, install tlrc, starship, lazygit, yazi from your distro or upstream."
+  echo "On Linux/BSD, zsh was installed or verified first; ~/.zshrc -> zsh/.zshrc.linux."
+  echo "  Install tlrc, starship, lazygit, yazi from your distro or upstream."
   echo "  Install a Nerd Font if your terminal theme expects Meslo."
+  echo "  Optional: chsh -s \"\$(command -v zsh)\" to make zsh your login shell."
+  echo "  Optional: add to the end of .zshrc: eval \"\$(starship init zsh)\""
 fi
 echo

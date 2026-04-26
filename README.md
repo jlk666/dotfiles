@@ -1,16 +1,18 @@
 # dotfiles
 
-Personal shell and terminal setup for macOS: **Oh My Zsh** (Agnoster), **Ghostty**, **Starship** (config file; optional in the shell), **lazygit**, and **yazi**.
+Personal shell and terminal setup: **Oh My Zsh** (Agnoster, macOS installer in `install.sh`), **Ghostty**, **Starship** (optional in the shell), **lazygit**, **yazi**, and **tlrc**. On Linux/BSD, Ghostty uses `~/.config/ghostty/config` (or `$XDG_CONFIG_HOME/ghostty/config`); tlrc uses `tlrc/config.linux.toml` for the XDG cache path.
 
 ## What is in the repo
 
 | Path in repo | Applied to |
 |--------------|------------|
 | `zsh/.zshrc` | `~/.zshrc` (symlink) |
-| `ghostty/config.ghostty` | `~/Library/Application Support/com.mitchellh.ghostty/config.ghostty` (symlink) |
+| `ghostty/config.ghostty` | macOS: `~/Library/Application Support/com.mitchellh.ghostty/config.ghostty`; Linux/BSD: `~/.config/ghostty/config` (symlink) |
 | `starship.toml` | `~/.config/starship.toml` (symlink) |
 | `lazygit/config.yml` | `~/.config/lazygit/config.yml` (symlink) |
 | `yazi/yazi.toml` | `~/.config/yazi/yazi.toml` (symlink) |
+| `tlrc/config.toml` | macOS: `~/Library/Application Support/tlrc/config.toml` (symlink) |
+| `tlrc/config.linux.toml` | Linux: `~/.config/tlrc/config.toml` (symlink) |
 
 Oh My Zsh is **not** stored in git (too large, updates often). The install script uses the [official installer](https://github.com/ohmyzsh/ohmyzsh) and then points `~/.zshrc` at this repo.
 
@@ -21,7 +23,7 @@ Oh My Zsh is **not** stored in git (too large, updates often). The install scrip
    ```bash
    xcode-select --install   # if you need git / build tools
    brew install --cask font-meslo-lg-nerd-font
-   brew install ghostty lazygit yazi starship
+   brew install ghostty lazygit yazi starship tlrc
    ```
 
 2. Install [MesloLGM Nerd](https://github.com/ryanoasis/nerd-fonts) if you want the font name to match the Ghostty config exactly: pick **MesloLGM Nerd Font Mono** in Ghostty, or use the cask above and pick the closest Meslo LGM Nerd family face.
